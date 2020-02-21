@@ -1,2 +1,2 @@
 # jubilant-temperature-data-logger
-Rest API to accept the temperature reading from the sensor attached to the RasberryPI. Ability to perform the CRUD operations.
+IOT backed application used to store the temperature readings and expose the REST API's to post and get the temperature readings.

@@ -1,0 +1,173 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "An application to deals with the content consumer model on database instance through API Gateway and Lambda\n"
+Transform: "AWS::Serverless-2016-10-31"
+Globals:
+  Function:
+    Timeout: 10
+Parameters:
+  ApiName:
+    Default: record_temperature
+    Type: String
+  AppName:
+    Default: recordtemperatureapi
+    Type: String
+  EnvName:
+    Default: dev
+    Type: String
+  LambdaAlias:
+    Default: dev
+    Type: String
+Resources:
+  recordtemperatureapi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: !Ref EnvName
+      EndpointConfiguration: REGIONAL
+      DefinitionBody:
+        swagger: "2.0"
+        info:
+          title: !Sub "${AppName}-${EnvName}-${ApiName}"
+        paths:
+          /record_temperature:
+            get:
+              responses: {}
+              x-amazon-apigateway-integration:
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ServerlessLambda.Arn}/invocations
+                responses: {}
+                httpMethod: "POST"
+                type: "aws_proxy"
+            post:
+              responses: {}
+              x-amazon-apigateway-integration:
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ServerlessLambda.Arn}/invocations
+                responses: {}
+                httpMethod: "POST"
+                type: "aws_proxy"
+            options:
+              responses:
+                "200":
+                  description: 200 response
+                  schema:
+                    $ref: "#/definitions/Empty"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Methods:
+                      type: string
+                    Access-Control-Allow-Headers:
+                      type: string
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: 200
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Methods: "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                passthroughBehavior: when_no_match
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                type: mock
+          /record_temperature/{id}:
+            get:
+              responses: {}
+              security:
+                - sigv4: []
+                - api_key: []
+              x-amazon-apigateway-integration:
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ServerlessLambda.Arn}/invocations
+                responses: {}
+                httpMethod: "POST"
+                type: "aws_proxy"
+            put:
+              responses: {}
+              x-amazon-apigateway-integration:
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ServerlessLambda.Arn}/invocations
+                responses: {}
+                httpMethod: "POST"
+                type: "aws_proxy"
+            delete:
+              responses: {}
+              x-amazon-apigateway-integration:
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ServerlessLambda.Arn}/invocations
+                responses: {}
+                httpMethod: "POST"
+                type: "aws_proxy"
+            options:
+              responses:
+                "200":
+                  description: 200 response
+                  schema:
+                    $ref: "#/definitions/Empty"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Methods:
+                      type: string
+                    Access-Control-Allow-Headers:
+                      type: string
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: 200
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Methods: "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                passthroughBehavior: when_no_match
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                type: mock
+        x-amazon-apigateway-request-validators:
+          Validate query string parameters and headers:
+            validateRequestParameters: true
+            validateRequestBody: false
+    Tags:
+      Appname: !Ref AppName
+      Envname: !Ref EnvName
+  ServerlessLambda:
+    Type: "AWS::Serverless::Function"
+    Properties:
+      AutoPublishAlias: !Ref LambdaAlias
+      CodeUri: ./build/
+      Environment:
+        Variables:
+          ENV_VAR: test
+      Events:
+        AllEvent:
+          Properties:
+            RestApiId: !Ref recordtemperatureapi
+            Method: any
+            Path: "/{proxy+}"
+          Type: Api
+      FunctionName: !Sub "${AppName}-${EnvName}-${ApiName}"
+      Handler: index.lambda_handler
+      Runtime: python3.6
+      Tags:
+        Appname: !Ref AppName
+        Envname: !Ref EnvName
+  ServerlessLambdaPermission:
+    Type: "AWS::Lambda::Permission"
+    DependsOn:
+      - recordtemperatureapi
+      - ServerlessLambda
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref ServerlessLambda
+      Principal: apigateway.amazonaws.com
+Outputs:
+  LambdaName:
+    Description: "ServerlessLambda Lambda Function Name"
+    Value: !Ref ServerlessLambda
+  ApiEndPoint:
+    Description: "API Gateway endpoint URL for Stage ServerlessLambda function"
+    Value: !Sub "https://${recordtemperatureapi}.execute-api.${AWS::Region}.amazonaws.com/${EnvName}/${ApiName}"
+  LambdaIAMRole:
+    Description: "Implicit IAM Role created for ServerlessLambda function"
+    Value: !GetAtt ServerlessLambda.Arn
